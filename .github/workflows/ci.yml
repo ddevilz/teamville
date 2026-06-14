@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Typecheck, build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version # Node 24 — required for TS type-stripping
+
+      # Cache the MiniLM model the embedder fallback test downloads (~80 MB),
+      # so reruns don't re-download it.
+      - name: Cache HuggingFace model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-all-MiniLM-L6-v2-v1
+
+      - name: Install dependencies
+        run: npm install --include=dev # esbuild/typescript are devDependencies
+
+      - name: Typecheck (backend + frontend)
+        run: npm run typecheck
+
+      - name: Build web bundle
+        run: npm run build:web
+
+      - name: Run tests
+        run: npm test
+        env:
+          # Skip retry backoff waits; no GITHUB_TOKEN → embedder uses offline MiniLM.
+          GH_MODELS_TEST_NOWAIT: "1"
