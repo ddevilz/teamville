@@ -76,7 +76,7 @@ flowchart TD
     subgraph SIM_ENGINE["Sim Engine  src/sim/engine.ts"]
         direction TB
         MAP_BFS["map.ts + walk.ts\nwaypoint graph + BFS\nagentPosition(personId, simTime)\npure fn — no LLM"]
-        EVENTS_SIM["events → schedule\nstandup Mon 09:30\nwar-room Wed 14:00\n6-node location graph"]
+        EVENTS_SIM["events → schedule\nstandup Mon 09:30\nwar-room Wed 14:00\n12-node graph (6 desks + 6 rooms) + door waypoints"]
     end
 
     EVENTS_TBL --> EVENTS_SIM
@@ -85,7 +85,7 @@ flowchart TD
 
     subgraph FRONTEND["Phaser 3.90 Frontend  public/game/  (esbuild → dist/bundle.js)"]
         direction TB
-        VILLAGE_SCENE["VillageScene.ts\nKenney RPG Urban Pack tiles\n6 distinct walk-cycle sprites\ndepth-sort · speech bubbles · day/night"]
+        VILLAGE_SCENE["VillageScene.ts\nKenney RPG Urban Pack tiles\n6 distinct walk-cycle sprites\ndepth-sort · speech bubbles · room clusters · event dropdown"]
         INTERVIEW_PANEL["InterviewPanel.ts\npipeline stepper · score bars\ntypewriter · citation chips\njudge verdict badge"]
         MEMORY_CARD["MemoryCard.ts\nreflection evidence trees"]
         SCRUBBER["timeline scrubber\nHTMLInputRange → simTime"]
@@ -119,11 +119,11 @@ flowchart TD
     COPILOT_SDK -. "LLM_BACKEND=copilot" .-> DRAFTER
     COPILOT_SDK -. "LLM_BACKEND=copilot" .-> JUDGE
 
-    subgraph WORKIQ["Work IQ  (optional future connector)"]
-        WIQ_NOTE["requires M365 Copilot license\n+ tenant admin consent\nDATA_SOURCE=workiq\n(not implemented in this demo)"]
+    subgraph WORKIQ["Work IQ  (real connector — @microsoft/workiq MCP)"]
+        WIQ_NOTE["npx -y @microsoft/workiq mcp\nmail · meetings · Teams · docs · people\nNEEDS: paid M365 Copilot license\n+ tenant admin consent + work account\nAPIs GA 2026-06-16\n(not wired in this submission)"]
     end
 
-    WORKIQ -. "DATA_SOURCE=workiq\n(future)" .-> SEED_JSON
+    WORKIQ -. "DATA_SOURCE=workiq\n(swaps ingest adapter only)" .-> SEED_JSON
 
     style WORKIQ fill:none,stroke:#999,stroke-dasharray: 6 4,color:#999
     style WIQ_NOTE fill:none,stroke:none,color:#999

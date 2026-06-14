@@ -239,15 +239,29 @@ See [`docs/architecture.mmd`](docs/architecture.mmd) for the Mermaid source and 
 
 ---
 
-## Honest notes
+## Data sources, capabilities & limitations
 
-**Synthetic data.** The six colleagues (Priya Sharma, Dana Chen, Tom Park, Marco Reyes, Sara Osei, Ben Torres) are fictional. The 144 memories and planted story arcs (Atlas launch blocked by vendor API + deployment freeze; Wednesday API-latency incident; Tuesday GraphQL drop) are fabricated. No real person's data is included. This is intentional: real work data in a public repo + video is a compliance risk.
+We're explicit about what works today, what the path to real data is (and how you can verify it yourself), and where the limits are.
 
-**Work IQ — future connector (dashed box in diagram).** The architecture shows a Work IQ MCP connector as a dashed optional box. It is not implemented. Enabling it would require an M365 Copilot license + tenant admin consent. The `DATA_SOURCE=workiq` flag in `.env` is a placeholder for that upgrade path. The data adapter interface is shaped to match what Work IQ exposes, so the interview pipeline would work unchanged — only the ingest step would swap. This project uses `DATA_SOURCE=synthetic` for the public demo.
+### ✅ What works today (in this submission)
+- The full **grounded-interview pipeline** on a free `GITHUB_TOKEN`: embed → retrieve (Park et al. formula) → relevance-gate decline → `gpt-4o` draft with inline citations → `gpt-4o-mini` grounding judge → render. A blocked draft never reaches the screen.
+- **Deterministic week replay**: village, enclosed rooms, walking agents, scripted per-day group meetings, scrubber, and a "jump to event" dropdown — zero LLM calls, so it can't break on stage.
+- **Two surfaces, one backend**: the Phaser web app and an **MCP server** with three tools inside VS Code Copilot Chat.
+- 144 ingested memories (129 episodic + 15 reflections), clickable citations to the exact source message, honest below-threshold decline, accessibility pass, PC-responsive layout, ~280 tests, CI + Render deploy config.
 
-**Free-tier rate limits.** Ingest takes ~83 seconds on the GitHub Models free tier (15 req/min limit). The ingest script retries with exponential backoff rather than failing. If you hit the daily embedding limit (150 requests/day free), wait until the next day or use the `@huggingface/transformers` offline fallback by unsetting `GITHUB_TOKEN` before running ingest.
+### 🔌 The real-data path — and how you can verify it
+- The ingest is **connector-agnostic behind a real `DATA_SOURCE` flag** in `src/ingest/index.ts`. `synthetic` (default) reads `data/seed/*.json`.
+- **Verify the seam yourself:** run `DATA_SOURCE=workiq npm run ingest`. It reaches the connector branch and **throws an explicit, sourced error** naming the real package and its requirements — rather than silently doing nothing. That branch point in the code is the integration seam, not a slide.
+- **The real connector exists and we identified it precisely:** Microsoft ships Work IQ as an official MCP server — the npm package **[`@microsoft/workiq`](https://www.npmjs.com/package/@microsoft/workiq)** (run `npx -y @microsoft/workiq mcp`; repo [`github.com/microsoft/work-iq`](https://github.com/microsoft/work-iq)). It's a stdio MCP server exposing **mail / meetings / calendar / Teams-message / document / people** tools over the M365 Copilot API. Because Teamville already speaks MCP (we ship our own server), wiring Work IQ in is swapping the ingest adapter — **everything downstream (retrieval, grounding judge, citations, both surfaces) is unchanged.** Our synthetic seed deliberately mirrors Work IQ's shapes (people + timestamped events + threads) so it's a drop-in.
 
-**GitHub Copilot used during development.** Both developers used GitHub Copilot agent mode throughout the build. The runtime interview pipeline makes live GitHub Models API calls (`gpt-4o` drafting, `gpt-4o-mini` judge) — Copilot-class models are integral to the demo, not incidental.
+### ⚠️ Limitations (honest)
+- **Work IQ is not wired in this submission** — and we verified *why* against Microsoft's docs. The `@microsoft/workiq` MCP server is **hard-gated**: it needs a **paid Microsoft 365 Copilot license** per user, **tenant admin consent** for delegated Graph scopes, and a **work/school account** (no personal accounts); its APIs **GA on 2026-06-16**. We have Copilot Basic (free), which is web-grounded only and explicitly cannot reach work content — so the connector would authenticate but return nothing. The architecture diagram shows it as a **dashed box**, and the flag **throws** instead of pretending. (Refs: [Work IQ CLI](https://learn.microsoft.com/microsoft-365/copilot/extensibility/work-iq/cli), [Work IQ MCP overview](https://learn.microsoft.com/microsoft-copilot-studio/use-work-iq).)
+- **Synthetic data.** The six colleagues and their 144 memories / planted story arcs (Atlas launch blocked by vendor API + deploy freeze; Wednesday latency incident; Tuesday GraphQL drop) are fictional. We deliberately did **not** ingest real workplace data — it shouldn't live in a public repo or demo video.
+- **Free-tier rate limits.** GitHub Models free tier is ~15 req/min and ~150 embeddings/day; ingest takes ~83s with exponential-backoff retries. Heavy public traffic could rate-limit live interviews — but the village/replay uses zero LLM calls. Offline fallback: unset `GITHUB_TOKEN` to ingest with the local `all-MiniLM-L6-v2` model.
+- **Scope.** One synthetic team, one work week — not multi-tenant. Render free tier cold-starts ~30–50s after idle.
+
+### GitHub Copilot during development
+Built with GitHub Copilot agent mode throughout the sprint. At runtime the interview pipeline makes live GitHub Models calls (`gpt-4o` drafting, `gpt-4o-mini` judge) — Copilot-class models are integral, not incidental.
 
 ---
 

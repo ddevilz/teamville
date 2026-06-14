@@ -3,6 +3,8 @@
 // and a 4 Hz polling loop against /sim/state?t=.
 
 import { AgentSprite, AGENT_FRAMES } from './AgentSprite.js';
+import { DialogueSequencer } from './eventDialogue.js';
+import type { SimEventRef } from './eventDialogue.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FRAME INDICES — tune against a live render; index = row*27 + col on the 27-wide sheet.
@@ -289,6 +291,17 @@ interface SimState {
   agents: SimAgent[];
 }
 
+// Shape of one entry from /sim/events
+interface SimEvent {
+  id: number;
+  simTime: number;
+  durationMin: number;
+  kind: string;
+  location: string;
+  participants: string[];
+  label: string;
+}
+
 export default class VillageScene extends Phaser.Scene {
   simTime: number = SIM_START;
   playing: boolean = false;
@@ -299,6 +312,10 @@ export default class VillageScene extends Phaser.Scene {
   private _rafHandle: number | null = null;
   /** Last bubble text shown per agent — prevents re-firing the same bubble on every poll tick. */
   private _lastBubble: Map<string, string> = new Map();
+
+  // ── Event dropdown + group dialogue state ─────────────────────────────────
+  private _simEvents: SimEvent[] = [];
+  private _dialogueSequencer: DialogueSequencer | null = null;
 
   // ── Scripted scene state ──────────────────────────────────────────────────
   private _scenes: SceneDef[] = [];
@@ -384,11 +401,12 @@ export default class VillageScene extends Phaser.Scene {
       scrubber.max   = String(SIM_END);
       scrubber.value = String(SIM_START);
       scrubber.addEventListener('input', () => {
-        // Dragging the scrubber pauses playback
+        // Dragging the scrubber pauses playback and stops any active event dialogue.
         this.playing = false;
         _updatePlayBtn();
         this.simTime = Number(scrubber.value);
         this._updateClock();
+        if (this._dialogueSequencer) this._dialogueSequencer.stop();
         void this._fetchAndApplyState();
       });
     }
@@ -411,8 +429,18 @@ export default class VillageScene extends Phaser.Scene {
         }
         this.playing = !this.playing;
         _updatePlayBtn();
+        // Resuming play cancels any paused event dialogue.
+        if (this.playing && this._dialogueSequencer) {
+          this._dialogueSequencer.stop();
+        }
       });
     }
+
+    // ── Initialise dialogue sequencer ──
+    this._dialogueSequencer = new DialogueSequencer(this.agents);
+
+    // ── Fetch /sim/events + wire dropdown ──
+    void this._fetchAndPopulateEvents();
 
     // ── Start rAF tick loop ──
     this._lastRealMs = performance.now();
@@ -1031,6 +1059,122 @@ export default class VillageScene extends Phaser.Scene {
     }
   }
 
+  // ── EVENTS DROPDOWN ──────────────────────────────────────────────────────
+
+  /**
+   * Fetch /sim/events, store the list, and populate the HUD dropdown grouped by day.
+   */
+  private async _fetchAndPopulateEvents(): Promise<void> {
+    let data: { events: SimEvent[] };
+    try {
+      const res = await fetch('/sim/events');
+      if (!res.ok) return;
+      data = (await res.json()) as { events: SimEvent[] };
+    } catch {
+      return; // server not ready
+    }
+
+    this._simEvents = data.events;
+
+    const select = document.getElementById('event-jump') as HTMLSelectElement | null;
+    if (!select) return;
+
+    // Clear all options except the first placeholder.
+    while (select.options.length > 1) select.remove(1);
+
+    // Group events by day name.
+    const byDay = new Map<string, SimEvent[]>();
+    const DAY_NAMES_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    for (const ev of data.events) {
+      const dayName = DAY_NAMES_FULL[new Date(ev.simTime).getUTCDay()] ?? 'Unknown';
+      const group = byDay.get(dayName) ?? [];
+      group.push(ev);
+      byDay.set(dayName, group);
+    }
+
+    // Ordered day keys (preserve insertion order from sorted events).
+    const orderedDays: string[] = [];
+    for (const ev of data.events) {
+      const dayName = DAY_NAMES_FULL[new Date(ev.simTime).getUTCDay()] ?? 'Unknown';
+      if (!orderedDays.includes(dayName)) orderedDays.push(dayName);
+    }
+
+    for (const dayName of orderedDays) {
+      const eventsForDay = byDay.get(dayName);
+      if (!eventsForDay || eventsForDay.length === 0) continue;
+
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = dayName;
+
+      for (const ev of eventsForDay) {
+        const opt = document.createElement('option');
+        opt.value = String(ev.id);
+        // Strip "Mon HH:MM — " prefix since the optgroup shows the day.
+        const shortLabel = ev.label.replace(/^[A-Za-z]+ \d+:\d+ — /, '');
+        opt.textContent = shortLabel;
+        opt.dataset['simTime']   = String(ev.simTime);
+        opt.dataset['duration']  = String(ev.durationMin);
+        optgroup.appendChild(opt);
+      }
+
+      select.appendChild(optgroup);
+    }
+
+    // Wire the change handler.
+    select.addEventListener('change', () => {
+      const selectedId = Number(select.value);
+      if (!selectedId) return;
+      const ev = this._simEvents.find((e) => e.id === selectedId);
+      if (!ev) return;
+      this._jumpToEvent(ev);
+      // Reset dropdown to placeholder after jump so user can re-select same event.
+      select.value = '';
+    });
+  }
+
+  /**
+   * Jump to an event: set simTime 4 min into the event (or mid-event if shorter),
+   * pause playback, update scrubber + clock, fetch state, start group dialogue.
+   */
+  private _jumpToEvent(ev: SimEvent): void {
+    // Pick a time clearly inside the event window: start + 4 min, capped at end.
+    const BUFFER_MS = 4 * 60 * 1000;
+    const eventEndMs = ev.simTime + ev.durationMin * 60 * 1000;
+    const target = Math.min(ev.simTime + BUFFER_MS, eventEndMs - 60_000);
+
+    // Clamp to overall sim window.
+    this.simTime = Math.max(SIM_START, Math.min(SIM_END, target));
+
+    // Pause playback.
+    this.playing = false;
+    const pb = document.getElementById('play-pause-btn') as HTMLButtonElement | null;
+    if (pb) {
+      pb.innerHTML = '&#9654;';
+      pb.setAttribute('aria-label', 'Play simulation');
+    }
+
+    // Update scrubber + clock.
+    const scrubber = document.getElementById('scrubber') as HTMLInputElement | null;
+    if (scrubber) scrubber.value = String(Math.round(this.simTime));
+    this._updateClock();
+
+    // Fetch the engine state so agents snap to the room.
+    void this._fetchAndApplyState();
+
+    // Stop any previous dialogue and start the new one for this event.
+    if (this._dialogueSequencer) {
+      this._dialogueSequencer.stop();
+      const evRef: SimEventRef = {
+        id:           ev.id,
+        kind:         ev.kind,
+        location:     ev.location,
+        participants: ev.participants,
+        simTime:      ev.simTime,
+      };
+      this._dialogueSequencer.start(evRef);
+    }
+  }
+
   // ── STATE FETCH ──────────────────────────────────────────────────────────
 
   private async _fetchAndApplyState(): Promise<void> {
@@ -1197,6 +1341,10 @@ export default class VillageScene extends Phaser.Scene {
     if (this._rafHandle !== null) {
       cancelAnimationFrame(this._rafHandle);
       this._rafHandle = null;
+    }
+    if (this._dialogueSequencer) {
+      this._dialogueSequencer.stop();
+      this._dialogueSequencer = null;
     }
     for (const agent of this.agents.values()) {
       agent.destroy();

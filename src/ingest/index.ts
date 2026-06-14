@@ -283,7 +283,31 @@ export async function ingestAll(
 ): Promise<void> {
   const log = (msg: string) => process.stdout.write(`[ingest] ${msg}\n`);
 
-  log('Loading seed data...');
+  // ── Data-source seam ────────────────────────────────────────────────────────
+  // The ingest is connector-agnostic. DATA_SOURCE selects where memories come
+  // from. "synthetic" (default) reads data/seed/*.json. "workiq" would pull a
+  // real team's Teams/mail/calendar/people via Microsoft Work IQ. The real
+  // connector is Microsoft's official MCP server, the npm package
+  // "@microsoft/workiq" (run: `npx -y @microsoft/workiq mcp`), which exposes
+  // mail / meetings / calendar / Teams-message / document / people tools over
+  // stdio. It is NOT wired here because it is hard-gated: a paid Microsoft 365
+  // Copilot license per user, tenant admin consent for delegated Graph scopes,
+  // and a work/school account (no personal accounts). Work IQ APIs GA 2026-06-16.
+  // Everything DOWNSTREAM of this seam (embed → score → reflect → retrieve →
+  // judge → cite) is identical regardless of source — only this adapter swaps.
+  // Docs: https://learn.microsoft.com/microsoft-365/copilot/extensibility/work-iq/cli
+  const dataSource = process.env['DATA_SOURCE'] ?? 'synthetic';
+  if (dataSource !== 'synthetic' && !overrides.peopleJson) {
+    throw new Error(
+      `DATA_SOURCE="${dataSource}" is not implemented. This submission wires only "synthetic".\n` +
+      `The real connector is Microsoft Work IQ — the official MCP server "@microsoft/workiq" ` +
+      `(run: npx -y @microsoft/workiq mcp). It requires a paid Microsoft 365 Copilot license ` +
+      `per user, tenant admin consent for Graph scopes, and a work/school account (no personal ` +
+      `accounts); Work IQ APIs GA 2026-06-16. See the README "Data sources" section.`,
+    );
+  }
+
+  log(`Loading seed data (DATA_SOURCE=${dataSource})...`);
 
   // ---------------------------------------------------------------------------
   // Load + upsert people

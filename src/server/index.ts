@@ -20,7 +20,7 @@ import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createInterviewRouter } from './routes/interview.ts';
-import { createSimRouter } from './routes/sim.ts';
+import { createSimRouter, createEventsRouter } from './routes/sim.ts';
 import { createMemoriesRouter } from './routes/memories.ts';
 import { createEngine } from '../sim/engine.ts';
 import { openDb, getPeople, getEvents } from '../memory/db.ts';
@@ -65,8 +65,10 @@ export function createApp({ db }: CreateAppOptions = { db: null }): express.Appl
   // When db is null (tests that don't exercise sim), we skip mounting the route
   // so callers get a 404 rather than a runtime error from getPeople/getEvents.
   if (db !== null) {
-    const simEngine = createEngine(getEvents(db), getPeople(db));
+    const events = getEvents(db);
+    const simEngine = createEngine(events, getPeople(db));
     app.use('/sim', createSimRouter({ engine: simEngine }));
+    app.use('/sim', createEventsRouter({ events }));
   }
 
   // GET /memories/:personId — Memories tab in InterviewPanel (Section 6 / Task 6.8)

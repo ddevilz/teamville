@@ -62,6 +62,9 @@ export function registerAgentAnims(scene: Phaser.Scene, agentId: string, idleFra
 const DRAG_THRESHOLD = 5;
 /** Depth bonus applied to a dragged sprite so it renders on top of everything. */
 const DRAG_DEPTH_BOOST = 9000;
+/** Speech bubbles always render above ALL sprites (incl. dragged) so meeting
+ *  bubbles flipped below an agent aren't covered by lower, higher-depth agents. */
+const BUBBLE_DEPTH = 10000;
 
 export interface AgentSpriteOptions {
   id: string;
@@ -115,6 +118,15 @@ export class AgentSprite {
   private shadow: Phaser.GameObjects.Ellipse;
   private _bubbleContainer: Phaser.GameObjects.Container | null = null;
   private _bubbleTimer: Phaser.Time.TimerEvent | null = null;
+  // When the agent is high on screen (top rooms — standup/whiteboard/lobby), the
+  // bubble would render up into the fixed HUD bar and be clipped. In that case we
+  // flip it BELOW the sprite. Decided per showBubble() call from the sprite's y.
+  private _bubbleBelow = false;
+
+  /** Y for the bubble container: above the head normally, below when flipped. */
+  private _bubbleAnchorY(): number {
+    return this.y + (this._bubbleBelow ? 16 : -TILE * ZOOM * 2);
+  }
   private _isMoving = false;
   private _bobTween: Phaser.Tweens.Tween | null = null;
   /** True when label is intentionally hidden (agent inside a room). */
@@ -346,15 +358,15 @@ export class AgentSprite {
 
       // Move bubble along with agent
       if (this._bubbleContainer) {
-        this._bubbleContainer.setPosition(this.x, this.y - TILE * ZOOM * 2 - 4);
-        this._bubbleContainer.setDepth(depth + 2);
+        this._bubbleContainer.setPosition(this.x, this._bubbleAnchorY());
+        this._bubbleContainer.setDepth(BUBBLE_DEPTH);
       }
     } else {
       // Dragging: shadow follows but stays at normal depth.
       this.shadow.setDepth(this.y - 1);
       if (this._bubbleContainer) {
-        this._bubbleContainer.setPosition(this.x, this.y - TILE * ZOOM * 2 - 4);
-        this._bubbleContainer.setDepth(this.y + DRAG_DEPTH_BOOST + 2);
+        this._bubbleContainer.setPosition(this.x, this._bubbleAnchorY());
+        this._bubbleContainer.setDepth(BUBBLE_DEPTH);
       }
     }
   }
@@ -388,20 +400,33 @@ export class AgentSprite {
     const th = tmpText.height + PADDING * 2;
     tmpText.destroy();
 
-    // Rounded rect background + tail triangle
+    // Flip the bubble below the sprite for top-of-screen agents (else it hides
+    // under the HUD bar). this.y is the feet; top rooms sit around y<250.
+    const below = this.y < 250;
+    this._bubbleBelow = below;
+
+    // Rect top/bottom relative to the container origin (the tail tip).
+    // above: rect sits above origin, tail points down to origin.
+    // below: rect sits below origin, tail points up to origin.
+    const rectY = below ? 8 : -th - 8;
+
     const bg = scene.add.graphics();
     bg.fillStyle(0xf5f5e8, 0.95);
     bg.lineStyle(1, 0x888866, 1);
-    bg.fillRoundedRect(-tw / 2, -th - 8, tw, th, RADIUS);
-    bg.strokeRoundedRect(-tw / 2, -th - 8, tw, th, RADIUS);
-    // Small tail pointing down
+    bg.fillRoundedRect(-tw / 2, rectY, tw, th, RADIUS);
+    bg.strokeRoundedRect(-tw / 2, rectY, tw, th, RADIUS);
+    // Tail triangle toward the sprite (down when above, up when below).
     bg.fillStyle(0xf5f5e8, 0.95);
-    bg.fillTriangle(-5, -8, 5, -8, 0, 0);
+    if (below) {
+      bg.fillTriangle(-5, 8, 5, 8, 0, 0); // points up
+    } else {
+      bg.fillTriangle(-5, -8, 5, -8, 0, 0); // points down
+    }
 
     // Text label positioned inside the rect
     const lbl = scene.add.text(
       -tw / 2 + PADDING,
-      -th - 8 + PADDING,
+      rectY + PADDING,
       displayText,
       {
         fontFamily: 'monospace',
@@ -413,10 +438,10 @@ export class AgentSprite {
 
     this._bubbleContainer = scene.add.container(
       this.x,
-      this.y - TILE * ZOOM * 2,
+      this._bubbleAnchorY(),
       [bg, lbl],
     );
-    this._bubbleContainer.setDepth(this.y + 2);
+    this._bubbleContainer.setDepth(BUBBLE_DEPTH);
 
     // Scale-in tween for polish
     this._bubbleContainer.setScale(0);

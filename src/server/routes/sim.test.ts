@@ -15,9 +15,10 @@ import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import express from 'express';
-import { createSimRouter } from './sim.ts';
+import { createSimRouter, createEventsRouter } from './sim.ts';
 import { createEngine } from '../../sim/engine.ts';
 import type { Person, Event, SimState } from '../../sim/engine.ts';
+import type { EventRow } from '../../memory/db.ts';
 
 // ── Frozen sim constants ──────────────────────────────────────────────────────
 const SIM_START = Date.parse('2026-06-08T09:00:00Z'); // 1780909200000
@@ -417,5 +418,131 @@ describe('GET /sim/state — real wiring via createApp with seed DB', () => {
         assert.equal(agent.location, 'war_room', `${agent.id} not at war_room`);
       }
     }
+  });
+});
+
+// ── Test group 5: GET /sim/events ─────────────────────────────────────────────
+
+// Sample event rows for the events router tests.
+const EVENTS_FIXTURE: EventRow[] = [
+  {
+    id: 1,
+    sim_time: SIM_START + 10 * 60_000, // Mon 09:10
+    duration_min: 30,
+    kind: 'meeting',
+    location: 'standup_room',
+    participants: JSON.stringify(['priya', 'dana', 'tom', 'marco', 'sara', 'ben']),
+    payload: JSON.stringify({ bubble: 'Atlas launch' }),
+  },
+  {
+    id: 2,
+    sim_time: SIM_START + 60 * 60_000, // Mon 10:00 — ambient (should be filtered out)
+    duration_min: 60,
+    kind: 'ambient',
+    location: 'kitchen',
+    participants: JSON.stringify(['priya']),
+    payload: JSON.stringify({}),
+  },
+  {
+    id: 3,
+    sim_time: Date.parse('2026-06-10T12:00:00Z'), // Wed 12:00 — war room incident
+    duration_min: 180,
+    kind: 'meeting',
+    location: 'war_room',
+    participants: JSON.stringify(['dana', 'tom', 'sara', 'ben']),
+    payload: JSON.stringify({ topic: 'API latency incident' }),
+  },
+];
+
+describe('GET /sim/events — events dropdown endpoint', () => {
+  let server: http.Server;
+  let baseUrl: string;
+
+  before(async () => {
+    const app = express();
+    app.use('/sim', createEventsRouter({ events: EVENTS_FIXTURE }));
+    await new Promise<void>((resolve) => {
+      server = http.createServer(app);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    const addr = server.address();
+    if (!addr || typeof addr === 'string') throw new Error('unexpected address type');
+    baseUrl = `http://127.0.0.1:${(addr as { port: number }).port}`;
+  });
+
+  after(() => new Promise<void>((resolve) => server.close(() => resolve())));
+
+  it('returns 200 with an events array', async () => {
+    const { status, body } = await get(baseUrl, '/sim/events');
+    assert.equal(status, 200);
+    const b = body as { events: unknown[] };
+    assert.ok(Array.isArray(b.events));
+  });
+
+  it('filters out ambient events', async () => {
+    const { body } = await get(baseUrl, '/sim/events');
+    const b = body as { events: Array<{ kind: string }> };
+    for (const ev of b.events) {
+      assert.notEqual(ev.kind, 'ambient', 'ambient event should not appear in /sim/events');
+    }
+  });
+
+  it('returns exactly 2 non-ambient events from fixture', async () => {
+    const { body } = await get(baseUrl, '/sim/events');
+    const b = body as { events: unknown[] };
+    assert.equal(b.events.length, 2);
+  });
+
+  it('each event has the required shape', async () => {
+    const { body } = await get(baseUrl, '/sim/events');
+    const b = body as { events: Array<{
+      id: unknown; simTime: unknown; durationMin: unknown;
+      kind: unknown; location: unknown; participants: unknown; label: unknown;
+    }> };
+    for (const ev of b.events) {
+      assert.ok(typeof ev.id === 'number',        `id must be number, got ${typeof ev.id}`);
+      assert.ok(typeof ev.simTime === 'number',   `simTime must be number`);
+      assert.ok(typeof ev.durationMin === 'number', `durationMin must be number`);
+      assert.ok(typeof ev.kind === 'string',       `kind must be string`);
+      assert.ok(typeof ev.location === 'string',   `location must be string`);
+      assert.ok(Array.isArray(ev.participants),    `participants must be array`);
+      assert.ok(typeof ev.label === 'string' && ev.label.length > 0, `label must be non-empty string`);
+    }
+  });
+
+  it('events are sorted by simTime', async () => {
+    const { body } = await get(baseUrl, '/sim/events');
+    const b = body as { events: Array<{ simTime: number }> };
+    for (let i = 1; i < b.events.length; i++) {
+      assert.ok(
+        b.events[i]!.simTime >= b.events[i - 1]!.simTime,
+        'events should be sorted by simTime ascending',
+      );
+    }
+  });
+
+  it('label includes time and location', async () => {
+    const { body } = await get(baseUrl, '/sim/events');
+    const b = body as { events: Array<{ label: string; location: string }> };
+    const standup = b.events.find((e) => e.location === 'standup_room');
+    assert.ok(standup, 'standup_room event not found');
+    assert.ok(standup.label.includes('09:10'), `label should contain time, got: ${standup.label}`);
+    assert.ok(standup.label.toLowerCase().includes('standup'), `label should mention location`);
+  });
+
+  it('label includes topic from payload when present', async () => {
+    const { body } = await get(baseUrl, '/sim/events');
+    const b = body as { events: Array<{ label: string; location: string }> };
+    const warRoom = b.events.find((e) => e.location === 'war_room');
+    assert.ok(warRoom, 'war_room event not found');
+    assert.ok(
+      warRoom.label.includes('API latency incident'),
+      `label should include topic from payload, got: ${warRoom.label}`,
+    );
+  });
+
+  it('Content-Type is application/json', async () => {
+    const res = await fetch(`${baseUrl}/sim/events`);
+    assert.ok(res.headers.get('content-type')?.includes('application/json'));
   });
 });
