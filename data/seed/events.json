@@ -1,0 +1,868 @@
+[
+  {
+    "id": 1,
+    "sim_time": 1780909800000,
+    "duration_min": 30,
+    "kind": "meeting",
+    "location": "standup_room",
+    "participants": [
+      "priya",
+      "dana",
+      "tom",
+      "marco",
+      "sara",
+      "ben"
+    ],
+    "payload": {
+      "topic": "Monday sprint standup – Atlas launch status",
+      "notes": "Priya: Atlas is top priority this week, launch date Friday is firm. Dana: vendor API is flaking, error rate up to 8% over the weekend, platform team deployment freeze not helping. Tom: finishing the Atlas dashboard loading states, should be done by noon. Marco: design system components are done, waiting on API contract. Sara: dashboards are live, posting daily digest to #atlas-metrics. Ben: reminder that 1:1s are Monday and Wednesday afternoons, please keep them.",
+      "bubble": "Atlas launch — let's go"
+    }
+  },
+  {
+    "id": 2,
+    "sim_time": 1780912200000,
+    "duration_min": 60,
+    "kind": "focus",
+    "location": "desk_dana",
+    "participants": [
+      "dana"
+    ],
+    "payload": {
+      "description": "Dana deep-dives on vendor API error logs. Datadog shows 2.3-second median latency and 8% error rate at 400 rps. She opens a ticket against the platform team for the deployment freeze, which she believes is preventing her from deploying a connection-pool patch.",
+      "bubble": "this vendor API latency is infuriating"
+    }
+  },
+  {
+    "id": 3,
+    "sim_time": 1780912200000,
+    "duration_min": 120,
+    "kind": "focus",
+    "location": "desk_tom",
+    "participants": [
+      "tom"
+    ],
+    "payload": {
+      "description": "Tom finishes the Atlas dashboard loading state implementation. Writes three Playwright tests covering the loading → data transition. All pass. Opens a PR titled 'feat(atlas): skeleton loading states + E2E coverage'.",
+      "bubble": "PR up, tests passing"
+    }
+  },
+  {
+    "id": 4,
+    "sim_time": 1780912200000,
+    "duration_min": 90,
+    "kind": "focus",
+    "location": "desk_sara",
+    "participants": [
+      "sara"
+    ],
+    "payload": {
+      "description": "Sara publishes the Monday morning Atlas metrics digest to #atlas-metrics: vendor API p50 latency 2,310ms (up 18% from last week), error rate 8.1%, request volume stable. Dashboard link included. Notes: 'Error rate is creeping. Worth watching.'",
+      "bubble": "error rate up 18% — posted digest"
+    }
+  },
+  {
+    "id": 5,
+    "sim_time": 1780916400000,
+    "duration_min": 15,
+    "kind": "message",
+    "location": "desk_dana",
+    "participants": [
+      "dana"
+    ],
+    "payload": {
+      "text": "Hey platform team — your deployment freeze is blocking my connection-pool patch for the vendor API. The Atlas launch is in 4 days. Can we get an exception or at least a timeline? This is causing real customer impact.",
+      "channel": "#platform-team",
+      "bubble": "someone answer the platform team channel"
+    }
+  },
+  {
+    "id": 6,
+    "sim_time": 1780920000000,
+    "duration_min": 20,
+    "kind": "1on1",
+    "location": "focus_booth",
+    "participants": [
+      "ben",
+      "dana"
+    ],
+    "payload": {
+      "topic": "Ben–Dana 1:1 – weekly check-in",
+      "notes": "Dana vents about the platform deployment freeze. Ben listens, acknowledges the frustration, promises to escalate to the platform EM. Dana mentions the vendor API latency but frames it as 'the platform freeze means I can't patch around it.' Ben takes away: escalate platform freeze. He does not probe the vendor API root cause.",
+      "bubble": "need that deployment unblocked"
+    }
+  },
+  {
+    "id": 7,
+    "sim_time": 1780923600000,
+    "duration_min": 30,
+    "kind": "meeting",
+    "location": "kitchen",
+    "participants": [
+      "priya",
+      "marco"
+    ],
+    "payload": {
+      "topic": "Informal Atlas UX walkthrough over coffee",
+      "notes": "Priya asks Marco to walk her through the current Atlas UI. Marco shows the Figma prototype on his laptop. Conversation is positive — the design looks good. Marco mentions he simplified the API surface. Priya doesn't ask for details. Neither raises the GraphQL situation explicitly.",
+      "bubble": "love the new onboarding flow"
+    }
+  },
+  {
+    "id": 8,
+    "sim_time": 1780931400000,
+    "duration_min": 45,
+    "kind": "meeting",
+    "location": "standup_room",
+    "participants": [
+      "priya",
+      "ben"
+    ],
+    "payload": {
+      "topic": "Atlas launch risk review",
+      "notes": "Priya and Ben review the launch-readiness checklist. Three yellows: vendor API stability, one missing integration test suite, and the onboarding copy not yet finalized. Ben flags the platform freeze as a blocker. Priya says she'll call the vendor account team directly if the error rate doesn't drop by Wednesday.",
+      "bubble": "three yellows is manageable"
+    }
+  },
+  {
+    "id": 9,
+    "sim_time": 1780996200000,
+    "duration_min": 30,
+    "kind": "meeting",
+    "location": "standup_room",
+    "participants": [
+      "priya",
+      "dana",
+      "tom",
+      "marco",
+      "sara",
+      "ben"
+    ],
+    "payload": {
+      "topic": "Tuesday sprint standup",
+      "notes": "Priya: need vendor API resolved by EOD Wednesday or we slip. Dana: still fighting the deployment freeze, rate slightly up to 9%. Tom: PR merged, starting on the vendor API retry wrapper Dana suggested last week. Marco: design sign-off complete, moving to implementation support. Sara: p99 latency hit 4,200ms this morning, included in the digest — 'it is getting worse.' Ben: 1:1s this afternoon, please don't cancel.",
+      "bubble": "p99 is at 4200ms — Sara's right"
+    }
+  },
+  {
+    "id": 10,
+    "sim_time": 1780999200000,
+    "duration_min": 90,
+    "kind": "meeting",
+    "location": "whiteboard",
+    "participants": [
+      "marco",
+      "dana"
+    ],
+    "payload": {
+      "topic": "API surface simplification — GraphQL drop decision",
+      "notes": "Marco and Dana work through the Atlas API surface at the whiteboard. Marco has been maintaining both REST and GraphQL schemas. Dana points out the only GraphQL consumer is the internal analytics tool that's being deprecated in Q3. Together they conclude: drop GraphQL from Atlas v1, ship REST-only, re-evaluate GraphQL for v2 if there's external demand. Decision is made here, verbally. Marco says he'll post to #atlas-api.",
+      "bubble": "REST-only is the right call here"
+    }
+  },
+  {
+    "id": 11,
+    "sim_time": 1781010000000,
+    "duration_min": 5,
+    "kind": "message",
+    "location": "desk_marco",
+    "participants": [
+      "marco"
+    ],
+    "payload": {
+      "text": "dropping graphql from v1 scope — REST only for launch. GraphQL consumer (internal analytics) is deprecated in Q3 anyway. See Figma for updated API surface. Will simplify the integration work significantly.",
+      "channel": "#atlas-api",
+      "bubble": "posted the GraphQL update"
+    }
+  },
+  {
+    "id": 12,
+    "sim_time": 1781002800000,
+    "duration_min": 45,
+    "kind": "1on1",
+    "location": "focus_booth",
+    "participants": [
+      "ben",
+      "tom"
+    ],
+    "payload": {
+      "topic": "Ben–Tom 1:1 – growth and visibility",
+      "notes": "Ben asks how Tom is feeling about the sprint. Tom says 'good, the loading states are in.' Ben probes for more — 'any challenges?' Tom mentions the vendor API retry wrapper he's starting, says it's interesting work. Ben notes Tom seems competent but hard to read. Mental note: find a moment to recognize Tom publicly. He doesn't ask specifically about what 'interesting work' means on the vendor API.",
+      "bubble": "Tom's doing more than he lets on"
+    }
+  },
+  {
+    "id": 13,
+    "sim_time": 1781006400000,
+    "duration_min": 120,
+    "kind": "focus",
+    "location": "desk_tom",
+    "participants": [
+      "tom"
+    ],
+    "payload": {
+      "description": "Tom reads Dana's runbook for the vendor API: implements exponential backoff with jitter on the client, adds a circuit breaker that opens after 5 consecutive failures and resets after 30 seconds. Writes unit tests. All green. Does not merge yet — wants Dana to review.",
+      "bubble": "circuit breaker is working in tests"
+    }
+  },
+  {
+    "id": 14,
+    "sim_time": 1781013600000,
+    "duration_min": 30,
+    "kind": "message",
+    "location": "desk_priya",
+    "participants": [
+      "priya"
+    ],
+    "payload": {
+      "text": "Just got a message from a partner — they're hitting 404s on the Atlas GraphQL endpoint. Can someone tell me when we dropped that and why? I'm not seeing it in the sprint board. I'm sure there's a good reason but I need to be able to explain it.",
+      "channel": "#atlas-team",
+      "bubble": "why is the GraphQL endpoint 404ing?"
+    }
+  },
+  {
+    "id": 15,
+    "sim_time": 1781015400000,
+    "duration_min": 10,
+    "kind": "message",
+    "location": "desk_marco",
+    "participants": [
+      "marco"
+    ],
+    "payload": {
+      "text": "Sorry Priya — posted it to #atlas-api yesterday afternoon. Short version: only internal consumer is the analytics tool being deprecated in Q3, maintaining two API surfaces doubled integration complexity, REST covers all external use cases. Happy to walk through the reasoning. Should have looped you in before deciding.",
+      "channel": "#atlas-team",
+      "bubble": "should have pinged Priya directly"
+    }
+  },
+  {
+    "id": 16,
+    "sim_time": 1781017200000,
+    "duration_min": 15,
+    "kind": "message",
+    "location": "desk_priya",
+    "participants": [
+      "priya"
+    ],
+    "payload": {
+      "text": "Thanks Marco. The reasoning makes sense. For future decisions like this — anything that changes the external API surface needs to go through me before it ships, even if the implementation decision seems obvious. I'll update the decision log. Can you add the rationale to the Jira ticket?",
+      "channel": "#atlas-team",
+      "bubble": "decision log updated"
+    }
+  },
+  {
+    "id": 17,
+    "sim_time": 1781020800000,
+    "duration_min": 30,
+    "kind": "meeting",
+    "location": "kitchen",
+    "participants": [
+      "dana",
+      "tom"
+    ],
+    "payload": {
+      "topic": "Informal vendor API war-council — kitchen",
+      "notes": "Dana sees Tom at the coffee machine and asks about the retry wrapper. Tom shows her the circuit breaker implementation on his laptop. Dana reviews it: 'this is actually what I sketched in the runbook, nice.' She suggests one tweak: back off to 60 seconds on third circuit open, not 30. Tom makes the change on the spot. Dana says 'merge it when you're happy with it, I'll review async.' This is the closest thing to a handoff.",
+      "bubble": "this circuit breaker logic looks right"
+    }
+  },
+  {
+    "id": 18,
+    "sim_time": 1781082600000,
+    "duration_min": 30,
+    "kind": "meeting",
+    "location": "standup_room",
+    "participants": [
+      "priya",
+      "dana",
+      "tom",
+      "marco",
+      "sara",
+      "ben"
+    ],
+    "payload": {
+      "topic": "Wednesday sprint standup",
+      "notes": "Priya: two days to launch, need to see green on vendor API today. Dana: error rate at 9.5%, escalated to vendor account team, still no ETA. Tom: vendor API retry wrapper is ready, waiting on final review, will merge after standup. Marco: implementation support ongoing, all components live. Sara: 'p99 is 5,800ms this morning, that's the highest it's been. I'd call this a watch situation.' Ben: I have the platform EM on a call at 11:00, will update.",
+      "bubble": "p99 5800ms — this is a watch situation"
+    }
+  },
+  {
+    "id": 19,
+    "sim_time": 1781085600000,
+    "duration_min": 20,
+    "kind": "message",
+    "location": "desk_tom",
+    "participants": [
+      "tom"
+    ],
+    "payload": {
+      "text": "Merging the vendor API retry wrapper. Circuit breaker opens after 5 failures, 60-second reset. Added jitter to prevent thundering herd. Monitoring the error rate now.",
+      "channel": "#atlas-api",
+      "bubble": "retry wrapper is merged"
+    }
+  },
+  {
+    "id": 20,
+    "sim_time": 1781089200000,
+    "duration_min": 15,
+    "kind": "message",
+    "location": "desk_sara",
+    "participants": [
+      "sara"
+    ],
+    "payload": {
+      "text": "Wednesday metrics digest — vendor API p50: 2,450ms, p99: 5,800ms (new high), error rate: 9.5%. This is now outside the normal band. Recommend treating as an active incident. Dashboard: [atlas-metrics link]",
+      "channel": "#atlas-metrics",
+      "bubble": "recommending incident status"
+    }
+  },
+  {
+    "id": 21,
+    "sim_time": 1781092800000,
+    "duration_min": 180,
+    "kind": "meeting",
+    "location": "war_room",
+    "participants": [
+      "dana",
+      "tom",
+      "sara",
+      "ben"
+    ],
+    "payload": {
+      "topic": "API latency spike incident — war room",
+      "notes": "Sara's 12:00 digest triggers Dana to declare an incident. p99 has climbed to 8,400ms by 14:00. Dana leads the war room, with Tom and Sara on diagnostics and Ben on communication. Dana writes the runbook on the wall: 1) isolate the vendor API calls, 2) implement circuit breaker, 3) add retry-with-jitter, 4) monitor recovery. Tom points out his circuit breaker is already merged and live since 10:40. Dana: 'oh, let's check if it's already helping.' Sara pulls the Datadog chart — the merge does not show a p99 improvement yet, the circuit breaker hasn't fired because the error rate is still below the 5-failure threshold at current load. Dana: 'we need to tune the threshold down to 3 failures for now.' Tom starts working on the threshold change.",
+      "bubble": "war room, incident declared"
+    }
+  },
+  {
+    "id": 22,
+    "sim_time": 1781092800000,
+    "duration_min": 60,
+    "kind": "ambient",
+    "location": "desk_priya",
+    "participants": [
+      "priya"
+    ],
+    "payload": {
+      "description": "Priya is notified of the incident but is in back-to-back external calls with vendor account team and a customer. She monitors the war room Slack channel on her phone.",
+      "bubble": "watching the incident from external calls"
+    }
+  },
+  {
+    "id": 23,
+    "sim_time": 1781096400000,
+    "duration_min": 60,
+    "kind": "focus",
+    "location": "desk_dana",
+    "participants": [
+      "dana"
+    ],
+    "payload": {
+      "description": "Dana joins an emergency call with the vendor API account team. They admit to a infrastructure issue on their side affecting high-traffic customers. ETA for fix: 4–8 hours. Dana comes back from the call, updates the war room: 'vendor confirmed their issue, ETA 4-8h, we hold the fort with circuit breaker.' She hands over active monitoring to Tom and Sara.",
+      "bubble": "vendor confirmed — 4-8 hour ETA"
+    }
+  },
+  {
+    "id": 24,
+    "sim_time": 1781100000000,
+    "duration_min": 30,
+    "kind": "message",
+    "location": "war_room",
+    "participants": [
+      "dana"
+    ],
+    "payload": {
+      "text": "Just off the vendor call. Confirmed infrastructure issue on their end, broad impact, ETA 4-8 hours. Our circuit breaker with threshold=3 should protect us from cascading. Tom, can you tune the threshold and add the health-check endpoint monitoring? Sara, keep an eye on the p99. I need to write up the vendor call notes and then I have a commitment I can't move.",
+      "channel": "war_room_slack",
+      "bubble": "handing off to Tom and Sara"
+    }
+  },
+  {
+    "id": 25,
+    "sim_time": 1781101200000,
+    "duration_min": 240,
+    "kind": "focus",
+    "location": "desk_tom",
+    "participants": [
+      "tom"
+    ],
+    "payload": {
+      "description": "Tom takes the handoff. He lowers the circuit breaker failure threshold to 3, adds a health-check polling endpoint that checks the vendor API every 10 seconds and logs the result to a metrics counter. He also adds an automatic fallback response for Atlas when the vendor circuit is open: a cached version of the last successful response with a 'data may be stale' indicator. He tests the fallback locally against a stubbed vendor endpoint. All green. He merges the threshold change at 17:20 and the fallback at 17:47. Monitors go green — p99 drops from 8,400ms to 210ms within 25 minutes of the fallback deployment.",
+      "bubble": "fallback is live, p99 dropping"
+    }
+  },
+  {
+    "id": 26,
+    "sim_time": 1781104800000,
+    "duration_min": 30,
+    "kind": "focus",
+    "location": "desk_sara",
+    "participants": [
+      "sara"
+    ],
+    "payload": {
+      "description": "Sara watches the p99 chart recover in real time. At 18:12 the p99 is at 210ms — within normal range. She screenshots the before/after. Builds a Metabase chart titled 'Wednesday Incident — Latency Recovery' showing the spike from 08:00 to 16:00 and the recovery from 17:47 to 18:12. Tags it 'atlas-incident-2026-06-10'. Does not post it anywhere yet.",
+      "bubble": "p99 is 210ms — incident resolved"
+    }
+  },
+  {
+    "id": 27,
+    "sim_time": 1781106300000,
+    "duration_min": 5,
+    "kind": "message",
+    "location": "desk_tom",
+    "participants": [
+      "tom"
+    ],
+    "payload": {
+      "text": "looks like it stabilized, pushed some changes",
+      "channel": "#atlas-api",
+      "bubble": "looks stable"
+    }
+  },
+  {
+    "id": 28,
+    "sim_time": 1781107200000,
+    "duration_min": 30,
+    "kind": "focus",
+    "location": "desk_dana",
+    "participants": [
+      "dana"
+    ],
+    "payload": {
+      "description": "Dana returns from her commitment, sees the green monitors, reads Tom's Slack message. She feels relief. She posts 'great, nice work team' in #atlas-api. She does not look at the commit history. She does not mention Tom specifically in any incident write-up she drafts tonight.",
+      "bubble": "monitors green, crisis over"
+    }
+  },
+  {
+    "id": 29,
+    "sim_time": 1781110800000,
+    "duration_min": 45,
+    "kind": "1on1",
+    "location": "focus_booth",
+    "participants": [
+      "ben",
+      "dana"
+    ],
+    "payload": {
+      "topic": "Ben–Dana 1:1 – incident debrief",
+      "notes": "Ben and Dana debrief the incident. Dana explains: vendor infrastructure issue, we held the line with the circuit breaker, monitors are green. Ben asks who did what. Dana says 'the team rallied, Sara caught it early, Tom helped with the threshold tuning.' She doesn't give Tom full credit for the fallback implementation. Ben writes in his notes: 'incident resolved — backend team response time was good. Follow-up: schedule post-mortem.' He plans to send a team shout-out but doesn't know exactly what to say about Tom's contribution.",
+      "bubble": "incident resolved, post-mortem TBD"
+    }
+  },
+  {
+    "id": 30,
+    "sim_time": 1781114400000,
+    "duration_min": 30,
+    "kind": "meeting",
+    "location": "kitchen",
+    "participants": [
+      "priya",
+      "sara"
+    ],
+    "payload": {
+      "topic": "Priya asks Sara about the incident data",
+      "notes": "Priya finds Sara in the kitchen at 19:00 and asks for the quick version of what happened. Sara explains: vendor API spike, p99 hit 8,400ms, circuit breaker mitigated it, p99 back to 210ms. 'The recovery chart is in Metabase if you want the full picture.' Priya: 'Who fixed it?' Sara: 'Tom pushed the changes that brought it down. Dana ran the war room in the morning.' Priya: 'Does Ben know it was Tom?' Sara: 'I don't know.'",
+      "bubble": "it was Tom who pushed the fix"
+    }
+  },
+  {
+    "id": 31,
+    "sim_time": 1781169000000,
+    "duration_min": 30,
+    "kind": "meeting",
+    "location": "standup_room",
+    "participants": [
+      "priya",
+      "dana",
+      "tom",
+      "marco",
+      "sara",
+      "ben"
+    ],
+    "payload": {
+      "topic": "Thursday sprint standup",
+      "notes": "Priya: good news — vendor confirmed their infra issue is resolved. Our circuit breaker is staying in. Two days to launch. Dana: p99 is at 180ms this morning, healthiest it's been in weeks. Tom: fallback cache is working well, added monitoring. Marco: final design pass done, handing off remaining components to Tom. Sara: 'morning metrics look clean — p50 250ms, p99 180ms, error rate 0.3%.' Ben: post-mortem scheduled for next Monday, also — 'I want to give a specific callout in the all-hands tomorrow.'",
+      "bubble": "p99 180ms — cleanest this week"
+    }
+  },
+  {
+    "id": 32,
+    "sim_time": 1781172000000,
+    "duration_min": 90,
+    "kind": "focus",
+    "location": "desk_dana",
+    "participants": [
+      "dana"
+    ],
+    "payload": {
+      "description": "Dana writes the Thursday incident post-mortem draft in Confluence. Timeline: vendor issue confirmed, war room convened, circuit breaker tuned, fallback deployed, recovery at 18:12. Under 'who did what': 'Dana led incident response and vendor escalation. Tom implemented circuit breaker tuning and the fallback cache. Sara provided real-time metrics.' This is the first written document that names Tom's contribution specifically.",
+      "bubble": "post-mortem draft sent for review"
+    }
+  },
+  {
+    "id": 33,
+    "sim_time": 1781172000000,
+    "duration_min": 60,
+    "kind": "focus",
+    "location": "desk_tom",
+    "participants": [
+      "tom"
+    ],
+    "payload": {
+      "description": "Tom finishes the remaining Atlas dashboard components Marco handed off. He writes comprehensive component-level documentation in JSDoc. All Playwright tests pass. Creates the final PR for Atlas v1 frontend: 'feat(atlas): complete dashboard – all components, loading states, fallback view, E2E coverage'. The PR description is three paragraphs, clearly explaining the vendor API fallback design.",
+      "bubble": "Atlas frontend PR is up"
+    }
+  },
+  {
+    "id": 34,
+    "sim_time": 1781175600000,
+    "duration_min": 30,
+    "kind": "meeting",
+    "location": "focus_booth",
+    "participants": [
+      "priya",
+      "tom"
+    ],
+    "payload": {
+      "topic": "Priya – Tom impromptu check-in",
+      "notes": "Priya pulls Tom aside after standup. 'I hear you did a lot of the heavy lifting on the incident Wednesday. I want to make sure that's visible.' Tom: 'Dana wrote the runbook, I just implemented it.' Priya: 'Tom, you implemented the fallback that brought p99 from 8,400ms to 210ms. That's not just implementation.' Tom: 'I guess, yeah.' Priya: 'I'm going to mention this specifically in the Friday all-hands. Is that okay?' Tom: 'Sure.' (He's visibly unsure how he feels about it.)",
+      "bubble": "I want to make sure this is visible"
+    }
+  },
+  {
+    "id": 35,
+    "sim_time": 1781179200000,
+    "duration_min": 45,
+    "kind": "1on1",
+    "location": "focus_booth",
+    "participants": [
+      "ben",
+      "marco"
+    ],
+    "payload": {
+      "topic": "Ben–Marco 1:1 – design process check-in",
+      "notes": "Ben raises the GraphQL drop situation. 'I want to understand what happened there — not as a problem, more as a process check.' Marco explains his reasoning clearly: two API surfaces, one deprecated consumer, simplifies Atlas integration. Ben: 'the decision was right. The issue is Priya found out from a partner, not from us. Can we agree that any external API surface change goes through Priya first?' Marco: 'yeah, I get it. I thought I posted it in time.' Ben: 'posting after the fact in a channel Priya doesn't watch closely is not the same as alignment.' Marco nods. No drama. Clear outcome.",
+      "bubble": "right decision, wrong process"
+    }
+  },
+  {
+    "id": 36,
+    "sim_time": 1781186400000,
+    "duration_min": 60,
+    "kind": "doc_edit",
+    "location": "desk_priya",
+    "participants": [
+      "priya"
+    ],
+    "payload": {
+      "title": "Atlas Launch Decision Log",
+      "description": "Priya updates the Atlas decision log in Confluence with: (1) GraphQL drop rationale and process note, (2) Wednesday incident summary with Tom credited for fallback implementation, (3) vendor API risk: 'resolved for launch, long-term: evaluate vendor alternatives or invest in caching layer.' She links Sara's recovery chart and Dana's post-mortem draft.",
+      "bubble": "decision log is updated"
+    }
+  },
+  {
+    "id": 37,
+    "sim_time": 1781255400000,
+    "duration_min": 30,
+    "kind": "meeting",
+    "location": "standup_room",
+    "participants": [
+      "priya",
+      "dana",
+      "tom",
+      "marco",
+      "sara",
+      "ben"
+    ],
+    "payload": {
+      "topic": "Friday sprint standup — launch day",
+      "notes": "Priya: today is launch day. All green. Dana: vendor API healthy, p99 150ms, error rate 0.2%. Tom: Atlas frontend complete, all tests green. Marco: design sign-off final. Sara: metrics look great, launch dashboard ready. Ben: 'great work this week everyone, we'll do the post-mortem Monday. Quick team shoutout: Tom, the vendor API fallback you built Wednesday saved the launch.' Tom: [visible slight discomfort] 'thanks, Dana's runbook made it straightforward.' Priya: 'we can debate that Monday. Let's ship.'",
+      "bubble": "let's ship Atlas"
+    }
+  },
+  {
+    "id": 38,
+    "sim_time": 1781258400000,
+    "duration_min": 120,
+    "kind": "focus",
+    "location": "desk_priya",
+    "participants": [
+      "priya"
+    ],
+    "payload": {
+      "description": "Priya coordinates the Atlas launch: customer comms sent, product announcement drafted, vendor account team notified of go-live, launch tracking doc updated to green. She posts in #company-general: 'Atlas is live. Thanks to the whole team for an intense week.'",
+      "bubble": "Atlas is live!"
+    }
+  },
+  {
+    "id": 39,
+    "sim_time": 1781258400000,
+    "duration_min": 120,
+    "kind": "focus",
+    "location": "desk_dana",
+    "participants": [
+      "dana"
+    ],
+    "payload": {
+      "description": "Dana monitors the Atlas production traffic for the first hour. p99 stable at 145ms. Error rate 0.15%. She adds annotations to the Datadog dashboard: 'Atlas v1 launch 2026-06-12 11:00 UTC.' Sends a message to the vendor account team: 'Atlas is live, your infra fix + our circuit breaker are holding, watching closely.'",
+      "bubble": "p99 145ms in production — holding"
+    }
+  },
+  {
+    "id": 40,
+    "sim_time": 1781258400000,
+    "duration_min": 30,
+    "kind": "focus",
+    "location": "desk_sara",
+    "participants": [
+      "sara"
+    ],
+    "payload": {
+      "description": "Sara activates the Atlas production metrics dashboard. Real-time charts for p50, p99, error rate, request volume. Builds a 'launch day' view. Posts the link to #atlas-metrics: 'Atlas launch metrics are live. p99 145ms, error rate 0.15%, first 100 requests processed.'",
+      "bubble": "launch dashboard is live"
+    }
+  },
+  {
+    "id": 41,
+    "sim_time": 1781262000000,
+    "duration_min": 60,
+    "kind": "meeting",
+    "location": "war_room",
+    "participants": [
+      "priya",
+      "dana",
+      "tom",
+      "marco",
+      "sara",
+      "ben"
+    ],
+    "payload": {
+      "topic": "Atlas launch retrospective — informal war room celebration",
+      "notes": "The team gathers in the war room (same place as Wednesday's incident — chosen deliberately by Priya). Priya: 'same room, very different energy.' She walks through the week: blocked Monday morning, incident Wednesday, fix Wednesday evening, clean launch Friday. Calls out three things: Dana's vendor escalation, Tom's fallback implementation, Sara's metrics that triggered the incident call. Marco: 'for what it's worth, the REST-only API made the integration much simpler in the end.' Dana: 'yeah, that was the right call, Marco.' Ben: 'see you all Monday for the post-mortem.'",
+      "bubble": "same room, very different energy"
+    }
+  },
+  {
+    "id": 42,
+    "sim_time": 1780996200000,
+    "duration_min": 60,
+    "kind": "focus",
+    "location": "desk_marco",
+    "participants": [
+      "marco"
+    ],
+    "payload": {
+      "description": "Marco does a deep Figma review of the Atlas onboarding flow. Notices three edge cases in the empty-state design that could confuse new users. Writes detailed Figma comments. Does not file a Jira ticket. Does not ping anyone. Updates are in Figma.",
+      "bubble": "three empty-state edge cases fixed"
+    }
+  },
+  {
+    "id": 43,
+    "sim_time": 1780999200000,
+    "duration_min": 45,
+    "kind": "focus",
+    "location": "desk_sara",
+    "participants": [
+      "sara"
+    ],
+    "payload": {
+      "description": "Sara runs the Tuesday metrics batch. Notices the vendor API p99 is trending up even relative to Monday — posts an update to #atlas-metrics. Also builds a time-series comparison chart: vendor API p99 by day for the past 14 days. The trend is clear: gradual degradation since last Thursday.",
+      "bubble": "14-day trend is clear — it's been degrading"
+    }
+  },
+  {
+    "id": 44,
+    "sim_time": 1781002800000,
+    "duration_min": 30,
+    "kind": "message",
+    "location": "desk_dana",
+    "participants": [
+      "dana"
+    ],
+    "payload": {
+      "text": "Platform team - following up on my Monday message. Still waiting on deployment exception. The vendor API error rate is now 9.5%, our connection pool patch would help buffer this. We're T-3 days to Atlas launch. This is a blocker.",
+      "channel": "#platform-team",
+      "bubble": "still no response from platform team"
+    }
+  },
+  {
+    "id": 45,
+    "sim_time": 1781086800000,
+    "duration_min": 20,
+    "kind": "message",
+    "location": "desk_ben",
+    "participants": [
+      "ben"
+    ],
+    "payload": {
+      "text": "Just off a call with the platform EM. They're in a SOC-2 audit freeze — no deployments until Friday. I know this is frustrating. We're going to have to work around it. Dana — can we discuss at 14:00 what our options are without the platform deployment?",
+      "channel": "#atlas-team",
+      "bubble": "platform freeze is until Friday — audit"
+    }
+  },
+  {
+    "id": 46,
+    "sim_time": 1781088600000,
+    "duration_min": 10,
+    "kind": "message",
+    "location": "desk_dana",
+    "participants": [
+      "dana"
+    ],
+    "payload": {
+      "text": "Copy. Will meet at 14:00. For the record — the platform freeze is a separate problem from the vendor API issue. The vendor API is degraded independent of anything we can deploy. Two problems. I may have been conflating them in Slack. Let me write this up properly.",
+      "channel": "#atlas-team",
+      "bubble": "I've been conflating two problems"
+    }
+  },
+  {
+    "id": 47,
+    "sim_time": 1781089200000,
+    "duration_min": 15,
+    "kind": "message",
+    "location": "desk_ben",
+    "participants": [
+      "ben"
+    ],
+    "payload": {
+      "text": "Appreciate that Dana. Let's separate them in the risk register: (1) vendor API degradation — ongoing, circuit breaker mitigation in progress. (2) platform deployment freeze — external constraint, resolved by Friday, no action needed from our side. Updating the launch risk doc now.",
+      "channel": "#atlas-team",
+      "bubble": "separating the two risks in the register"
+    }
+  },
+  {
+    "id": 48,
+    "sim_time": 1781167200000,
+    "duration_min": 60,
+    "kind": "doc_edit",
+    "location": "desk_dana",
+    "participants": [
+      "dana"
+    ],
+    "payload": {
+      "title": "Vendor API Integration — Technical Assessment",
+      "description": "Dana writes a proper technical assessment of the vendor API situation: measured latency data (p50, p99 by day, past 3 weeks), root cause analysis (vendor infrastructure degradation, not platform team), mitigation options (circuit breaker + fallback cache — both implemented by Tom), and a recommendation: evaluate vendor alternatives for v2, and formalize the circuit breaker pattern as a team standard.",
+      "bubble": "writing the honest vendor API assessment"
+    }
+  },
+  {
+    "id": 49,
+    "sim_time": 1781251800000,
+    "duration_min": 30,
+    "kind": "focus",
+    "location": "desk_sara",
+    "participants": [
+      "sara"
+    ],
+    "payload": {
+      "description": "Sara prepares the Friday launch metrics digest: vendor API p99 150ms (lowest this week), error rate 0.2%, request volume projections for post-launch. She also includes the incident recovery chart from Wednesday — a before/after that clearly shows the p99 dropping from 8,400ms to 210ms at the moment of Tom's fallback deployment at 17:47. Posts to #atlas-metrics with the note: 'Ready to launch. The circuit breaker + fallback is solid.'",
+      "bubble": "ready-to-launch metrics digest posted"
+    }
+  },
+  {
+    "id": 50,
+    "sim_time": 1781258400000,
+    "duration_min": 30,
+    "kind": "focus",
+    "location": "desk_tom",
+    "participants": [
+      "tom"
+    ],
+    "payload": {
+      "description": "Tom does a final pre-launch review of the Atlas frontend. Checks every Playwright test passes in CI. Reviews the fallback cache implementation one more time. Makes one small fix: the 'data may be stale' indicator now includes the timestamp of the last successful vendor response. Merges the fix. Feels quiet satisfaction.",
+      "bubble": "final pre-launch checks — all green"
+    }
+  },
+  {
+    "id": 51,
+    "sim_time": 1780920000000,
+    "duration_min": 30,
+    "kind": "meeting",
+    "location": "kitchen",
+    "participants": [
+      "tom",
+      "sara"
+    ],
+    "payload": {
+      "topic": "Informal Monday kitchen chat — metrics and frontend",
+      "notes": "Tom and Sara both happen to be making coffee around 11:00. Sara mentions she posted the vendor API metrics digest. Tom says he saw it: 'the 18% increase in p99 — that tracks with what I was seeing in the network tab on the Atlas dashboard. The API calls are just slow.' Sara: 'yeah, it's a vendor problem, not a caching problem on our end.' Tom: 'I'm going to read through Dana's runbook today, seems relevant.' Sara: 'good idea.'",
+      "bubble": "the vendor API calls are just slow"
+    }
+  },
+  {
+    "id": 52,
+    "sim_time": 1781006400000,
+    "duration_min": 20,
+    "kind": "meeting",
+    "location": "lobby",
+    "participants": [
+      "priya",
+      "ben"
+    ],
+    "payload": {
+      "topic": "Priya–Ben impromptu lobby sync on Atlas risks",
+      "notes": "Priya and Ben cross paths in the lobby on Tuesday afternoon. Priya: 'Did you see the GraphQL thing?' Ben: 'I saw Priya's Slack message. Marco explained it.' Priya: 'I'm not upset at the decision, I'm upset at how I found out.' Ben: 'I'm scheduling a 1:1 with Marco about process.' Priya: 'Good. Also the vendor API worry is real — Sara's numbers are concerning.' Ben: 'I'll try to get the platform EM to prioritize the freeze exception.' Brief, direct, aligned.",
+      "bubble": "vendor API worry is real"
+    }
+  },
+  {
+    "id": 53,
+    "sim_time": 1781172000000,
+    "duration_min": 30,
+    "kind": "meeting",
+    "location": "kitchen",
+    "participants": [
+      "marco",
+      "tom"
+    ],
+    "payload": {
+      "topic": "Marco–Tom Thursday kitchen — component handoff",
+      "notes": "Marco hands off the last three design components to Tom. They go through the Figma specs together. Marco: 'the tooltip animation is tricky — I drew it out but the CSS timing function matters.' Tom: 'I'll match it to the existing loading state animation, same curve.' Marco: 'perfect, that's the right instinct.' Brief positive exchange.",
+      "bubble": "tooltip animation — match the loading curve"
+    }
+  },
+  {
+    "id": 54,
+    "sim_time": 1781092800000,
+    "duration_min": 30,
+    "kind": "ambient",
+    "location": "lobby",
+    "participants": [
+      "ben"
+    ],
+    "payload": {
+      "description": "Ben in the lobby, phone to his ear, pacing. He is on a call updating the VP of Product on the incident status.",
+      "bubble": "on a call with VP Product — incident update"
+    }
+  },
+  {
+    "id": 55,
+    "sim_time": 1781092800000,
+    "duration_min": 30,
+    "kind": "ambient",
+    "location": "desk_marco",
+    "participants": [
+      "marco"
+    ],
+    "payload": {
+      "description": "Marco at his desk, headphones on, not in the war room. He is aware of the incident but has no action items. He is working on the Atlas empty-state illustrations that will be needed for the fallback view.",
+      "bubble": "building the fallback empty state"
+    }
+  },
+  {
+    "id": 56,
+    "sim_time": 1781255400000,
+    "duration_min": 15,
+    "kind": "message",
+    "location": "desk_priya",
+    "participants": [
+      "priya"
+    ],
+    "payload": {
+      "text": "Team — it's Friday and Atlas launches today. I want to say something before we start: this was a hard week. A real incident, a communication miss, and a vendor that didn't cooperate. The fact that we're launching on time is because of specific choices specific people made. I'll name names at standup. Let's go.",
+      "channel": "#atlas-team",
+      "bubble": "today we launch — thank you"
+    }
+  }
+]

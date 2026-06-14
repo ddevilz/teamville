@@ -1,0 +1,38 @@
+{
+  "name": "teamville",
+  "version": "0.1.0",
+  "description": "Generative-agents village replay of a team's work week",
+  "type": "module",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "scripts": {
+    "build:web": "esbuild public/game/main.ts --bundle --format=iife --target=es2020 --sourcemap --external:phaser --outfile=public/game/dist/bundle.js",
+    "prestart": "npm run build:web",
+    "start": "node src/server/index.ts",
+    "test": "node --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.web.json --noEmit",
+    "ingest": "node scripts/ingest.ts",
+    "demo:reset": "node scripts/demo-reset.ts",
+    "db:reset": "node scripts/demo-reset.ts",
+    "mcp": "node src/mcp/server.ts"
+  },
+  "dependencies": {
+    "@github/copilot-sdk": "^1.0.1",
+    "@huggingface/transformers": "^3.5.2",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "better-sqlite3": "^12.0.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.3",
+    "esbuild": "^0.28.1",
+    "jimp": "^1.6.1",
+    "phaser": "^3.90.0",
+    "typescript": "^6.0.3"
+  }
+}

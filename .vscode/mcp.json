@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "teamville": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["src/mcp/server.ts"],
+      "env": {
+        "DB_PATH": "db/seed.db"
+      }
+    }
+  }
+}

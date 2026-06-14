@@ -1,0 +1,35 @@
+# Render Blueprint for Teamville.
+# Assumes the repo ROOT is this `teamville/` folder. If your repo root is the
+# parent folder instead, add `rootDir: teamville` under the service.
+#
+# Deploy: push to GitHub → render.com → New + → Blueprint → pick the repo →
+# set the GITHUB_TOKEN secret (below, sync:false) → Apply.
+services:
+  - type: web
+    name: teamville
+    runtime: node
+    plan: free
+    # Build: install ALL deps (esbuild/typescript are devDependencies and are
+    # needed to bundle the Phaser frontend) then build the browser bundle.
+    buildCommand: npm install --include=dev && npm run build:web
+    # Start: create a fresh writable runtime DB from the committed seed.db
+    # (interviews + last_access writes need a writable file), then serve.
+    # Bypasses `npm start` so the bundle isn't rebuilt on every boot.
+    startCommand: node scripts/demo-reset.ts && node src/server/index.ts
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      # Node 24 — required for native TypeScript type-stripping (`node src/*.ts`).
+      - key: NODE_VERSION
+        value: 24.15.0
+      # Serve the writable runtime copy (created on boot from db/seed.db).
+      - key: DB_PATH
+        value: db/runtime.db
+      - key: DATA_SOURCE
+        value: synthetic
+      # GitHub Models token — powers embeddings + the live interview LLM.
+      # SECRET: set the value in the Render dashboard (not committed here).
+      # Without it the village/replay still works, but interviews will error
+      # (the embedder locks to MiniLM and mismatches the GitHub-ingested DB).
+      - key: GITHUB_TOKEN
+        sync: false

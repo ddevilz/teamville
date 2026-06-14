@@ -1,0 +1,132 @@
+flowchart TD
+    subgraph INGEST["Offline Ingest  (npm run ingest, ~83s free-tier)"]
+        direction TB
+        SEED_JSON["data/seed/\npeople.json · events.json\n6 people · planted story arcs"]
+        EMBED_NODE["src/ingest/embedder.ts\nembed(texts)\nbatched → GitHub Models\nopenai/text-embedding-3-small\n1536-dim Float32Array"]
+        IMP_NODE["src/ingest/importance.ts\nscoreImportance()\ngpt-4o-mini · batch 20"]
+        REFLECT_NODE["src/ingest/reflector.ts\nreflect()\nbudget 150 → 3 focal Qs\n→ 5 insights + evidence_ids\n(15 reflection memories)"]
+        SEED_JSON --> EMBED_NODE
+        SEED_JSON --> IMP_NODE
+        IMP_NODE --> REFLECT_NODE
+        EMBED_NODE --> REFLECT_NODE
+    end
+
+    subgraph DB["SQLite  db/seed.db → db/runtime.db  (better-sqlite3)"]
+        direction TB
+        MEM_TBL["memories\ntext · sim_time · last_access\nimportance · embedding BLOB\nsource_ref · evidence_ids\n(144 total: 129 episodic + 15 reflections)"]
+        PEOPLE_TBL["people\nid · name · role\npersona_json · sprite"]
+        EVENTS_TBL["events\nsim_time · location\nparticipants · payload"]
+        INTERVIEWS_TBL["interviews\nperson_id · question · answer\ncited_memory_ids"]
+    end
+
+    REFLECT_NODE --> MEM_TBL
+    SEED_JSON --> PEOPLE_TBL
+    SEED_JSON --> EVENTS_TBL
+
+    subgraph GH_MODELS["GitHub Models API  (default LLM backend)"]
+        direction LR
+        GH_EMBED["openai/text-embedding-3-small\n1536-dim embeddings\nfree GITHUB_TOKEN only"]
+        GH_CHEAP["openai/gpt-4o-mini\nimportance scoring + judge\ntemp 0.1"]
+        GH_FRONTIER["openai/gpt-4o\ninterview answer drafting\ntemp 0.3"]
+    end
+
+    GH_EMBED --> EMBED_NODE
+    GH_CHEAP --> IMP_NODE
+    GH_CHEAP --> REFLECT_NODE
+
+    subgraph MINILM_FB["Offline fallback  (no GITHUB_TOKEN)"]
+        MINILM["@huggingface/transformers\nall-MiniLM-L6-v2\n384-dim"]
+    end
+
+    MINILM -. "fallback if\nno GITHUB_TOKEN" .-> EMBED_NODE
+
+    subgraph INTERVIEW["Interview Pipeline  src/interview/pipeline.ts"]
+        direction TB
+        PIPE_EMBED["1. embed question\ngithub-models.ts"]
+        RETRIEVE["2. retrieveWithTrace()\nsrc/memory/retrieve.ts\nPark et al. formula:\nscore = 0.5·rec + 3.0·rel + 2.0·imp\ntop-15 · RELEVANCE_THRESHOLD=0.25"]
+        GATE["3. relevance gate\nmax cosine below 0.25?\n→ instant decline\n(zero LLM calls)"]
+        DRAFTER["4. drafter.ts\ndraftAnswer()\ngpt-4o · inline citations [n]"]
+        JUDGE["5. judge.ts\njudgeAnswer()\ngpt-4o-mini\ngrounded + safe? → pass / block"]
+        RENDER["6. render\ntypewriter only after judge pass\ncitation chips · score bars\nverdict badge"]
+        PIPE_EMBED --> RETRIEVE
+        RETRIEVE --> GATE
+        GATE -- "pass" --> DRAFTER
+        GATE -- "decline" --> RENDER
+        DRAFTER --> JUDGE
+        JUDGE -- "pass" --> RENDER
+        JUDGE -- "block" --> RENDER
+    end
+
+    MEM_TBL --> RETRIEVE
+    GH_EMBED --> PIPE_EMBED
+    GH_FRONTIER --> DRAFTER
+    GH_CHEAP --> JUDGE
+
+    subgraph EXPRESS["Express Server  src/server/index.ts"]
+        direction TB
+        SIM_ROUTE["GET /sim/state?t=\nagent positions\n(pure fn of simTime)"]
+        INT_ROUTE["POST /interview\n{personId, question}\n→ {answer, citations, verdict}"]
+        MEM_ROUTE["GET /memories/:personId"]
+        STATIC_FILES["static: public/ · assets/"]
+    end
+
+    RENDER --> INT_ROUTE
+    DB --> EXPRESS
+
+    subgraph SIM_ENGINE["Sim Engine  src/sim/engine.ts"]
+        direction TB
+        MAP_BFS["map.ts + walk.ts\nwaypoint graph + BFS\nagentPosition(personId, simTime)\npure fn — no LLM"]
+        EVENTS_SIM["events → schedule\nstandup Mon 09:30\nwar-room Wed 14:00\n6-node location graph"]
+    end
+
+    EVENTS_TBL --> EVENTS_SIM
+    PEOPLE_TBL --> MAP_BFS
+    MAP_BFS --> SIM_ROUTE
+
+    subgraph FRONTEND["Phaser 3.90 Frontend  public/game/  (esbuild → dist/bundle.js)"]
+        direction TB
+        VILLAGE_SCENE["VillageScene.ts\nKenney RPG Urban Pack tiles\n6 distinct walk-cycle sprites\ndepth-sort · speech bubbles · day/night"]
+        INTERVIEW_PANEL["InterviewPanel.ts\npipeline stepper · score bars\ntypewriter · citation chips\njudge verdict badge"]
+        MEMORY_CARD["MemoryCard.ts\nreflection evidence trees"]
+        SCRUBBER["timeline scrubber\nHTMLInputRange → simTime"]
+    end
+
+    SIM_ROUTE --> VILLAGE_SCENE
+    INT_ROUTE --> INTERVIEW_PANEL
+    STATIC_FILES --> FRONTEND
+
+    subgraph MCP_SERVER["MCP Server  src/mcp/server.ts\n(@modelcontextprotocol/sdk · stdio)"]
+        direction TB
+        LIST_TOOL["teamville_list_agents\nno LLM call"]
+        INTERVIEW_TOOL["teamville_interview\nfull pipeline + citations"]
+        TRACE_TOOL["teamville_memory_trace\nembed + score only\nno draft/judge"]
+    end
+
+    RENDER --> INTERVIEW_TOOL
+    RETRIEVE --> TRACE_TOOL
+    DB --> MCP_SERVER
+
+    subgraph VSCODE["VS Code Copilot Chat  (Agent mode)"]
+        CHAT[".vscode/mcp.json\nautodiscovered tools"]
+    end
+
+    MCP_SERVER -->|stdio| VSCODE
+
+    subgraph COPILOT_SDK["Optional: @github/copilot-sdk v1.0.1"]
+        SDK_NOTE["LLM_BACKEND=copilot\nrequires Copilot subscription\n+ gh auth login"]
+    end
+
+    COPILOT_SDK -. "LLM_BACKEND=copilot" .-> DRAFTER
+    COPILOT_SDK -. "LLM_BACKEND=copilot" .-> JUDGE
+
+    subgraph WORKIQ["Work IQ  (optional future connector)"]
+        WIQ_NOTE["requires M365 Copilot license\n+ tenant admin consent\nDATA_SOURCE=workiq\n(not implemented in this demo)"]
+    end
+
+    WORKIQ -. "DATA_SOURCE=workiq\n(future)" .-> SEED_JSON
+
+    style WORKIQ fill:none,stroke:#999,stroke-dasharray: 6 4,color:#999
+    style WIQ_NOTE fill:none,stroke:none,color:#999
+    style COPILOT_SDK fill:none,stroke:#aaa,stroke-dasharray: 4 3,color:#888
+    style SDK_NOTE fill:none,stroke:none,color:#888
+    style MINILM_FB fill:none,stroke:#aaa,stroke-dasharray: 4 3,color:#888
