@@ -72,7 +72,8 @@
     }
 
     #scrubber {
-      flex: 1;
+      flex: 1 1 0;
+      min-width: 40px;   /* yield space to the dropdown instead of pushing it off-screen */
       accent-color: var(--accent);
       cursor: pointer;
       pointer-events: all;
@@ -382,6 +383,7 @@
       cursor: pointer;
       pointer-events: all;
       max-width: 260px;
+      flex-shrink: 0;   /* never get squeezed/clipped off the right edge */
       outline: none;
     }
     #event-jump:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
