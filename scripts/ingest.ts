@@ -14,15 +14,15 @@
  *   - completes in < 60 seconds
  */
 
-import 'dotenv/config';
+// Loads .env from the project root (cwd-independent) BEFORE embedder.ts locks
+// its model, and gives us PROJECT_ROOT. Must be the first import.
+import { PROJECT_ROOT } from '../src/load-env.ts';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { openDb } from '../src/memory/db.ts';
 import { runIngest } from '../src/ingest/index.ts';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_DB = path.resolve(__dirname, '../db/seed.db');
+const DEFAULT_DB = path.join(PROJECT_ROOT, 'db', 'seed.db');
 
 // Parse --db flag (takes precedence over DB_PATH env)
 const dbFlagIdx = process.argv.indexOf('--db');

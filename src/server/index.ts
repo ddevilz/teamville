@@ -15,7 +15,9 @@
  *   GET  /memories/:personId → (implemented in Section 6)
  */
 
-import 'dotenv/config'; // load GITHUB_TOKEN before embedder.ts locks its model choice
+// Loads .env from the project root (cwd-independent) BEFORE embedder.ts locks
+// its model — and gives us PROJECT_ROOT. Must be the first import.
+import { PROJECT_ROOT } from '../load-env.ts';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,8 +31,8 @@ import type Database from 'better-sqlite3';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Two levels up from src/server/ → repo root
-const REPO_ROOT = path.resolve(__dirname, '..', '..');
+// Project root (= one level up from src/), shared with load-env.
+const REPO_ROOT = PROJECT_ROOT;
 const PUBLIC_DIR = path.join(REPO_ROOT, 'public');
 const ASSETS_DIR = path.join(REPO_ROOT, 'assets');
 

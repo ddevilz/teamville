@@ -9,11 +9,13 @@
  * Transport: stdio (McpServer + StdioServerTransport from @modelcontextprotocol/sdk)
  * Run:  DB_PATH=db/seed.db node src/mcp/server.ts
  *
- * IMPORTANT: dotenv must be imported FIRST so GITHUB_TOKEN is set before
- * embedder.ts is imported (the model is locked at module load time).
+ * IMPORTANT: ../load-env.ts MUST be the first import — it loads .env from the
+ * project root (by file location, NOT cwd) so GITHUB_TOKEN is set before
+ * embedder.ts locks its model at load time, no matter which directory an MCP
+ * client launches this server from.
  */
 
-import 'dotenv/config';
+import { resolveDbPath } from '../load-env.ts';
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -249,7 +251,11 @@ export function createServer(
     runInterview: runInterviewOverride,
   }: { dbPath?: string; runInterview?: typeof _runInterview } = {},
 ): { run: () => Promise<void> } {
-  const RESOLVED_DB_PATH = dbPath ?? (process.env.DB_PATH ?? 'db/seed.db');
+  // cwd-independent. Tests pass an explicit dbPath (honored as-is). In production
+  // (no dbPath) we use resolveDbPath: an absolute DB_PATH is honored, anything
+  // relative/unset falls back to the project's own db/seed.db — so an MCP client
+  // launching this server from a foreign cwd still finds the populated DB.
+  const RESOLVED_DB_PATH = dbPath ?? resolveDbPath(process.env.DB_PATH);
 
   const server = new McpServer({
     name: 'teamville',
