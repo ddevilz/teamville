@@ -4,6 +4,8 @@
 
 Built for the **Microsoft Agents League Hackathon, AI Skills Fest iteration 2, Creative Apps track** (June 2026).
 
+[![Teamville](assets/teamville.png)](assets/teamville.png)
+
 [![Architecture](docs/architecture.png)](docs/architecture.mmd)
 
 ---
