@@ -186,8 +186,6 @@ DB_PATH=db/runtime.db npm run mcp
 
 ## The 12 acceptance scenarios
 
-Full scenario definitions (exact setup, action, expected output): [`docs/superpowers/plans/2026-06-12-teamville-scenarios.md`](docs/superpowers/plans/2026-06-12-teamville-scenarios.md)
-
 | ID | Scenario | Quick verify |
 |----|----------|-------------|
 | S1 | Village loads, 6 distinct sprites at desks | `npm start` → `http://localhost:3000` |
