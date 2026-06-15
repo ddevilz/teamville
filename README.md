@@ -259,7 +259,7 @@ We're explicit about what works today, what the path to real data is (and how yo
 - **Scope.** One synthetic team, one work week — not multi-tenant. Render free tier cold-starts ~30–50s after idle.
 
 ### GitHub Copilot during development
-Built with GitHub Copilot agent mode throughout the sprint. At runtime the interview pipeline makes live GitHub Models calls (`gpt-4o` drafting, `gpt-4o-mini` judge) — Copilot-class models are integral, not incidental.
+Built with Claude & GitHub Copilot agent mode throughout the sprint. At runtime the interview pipeline makes live GitHub Models calls (`gpt-4o` drafting, `gpt-4o-mini` judge) — Copilot-class models are integral, not incidental.
 
 ---
 
